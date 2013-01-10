@@ -75,6 +75,11 @@ class IGTWizardWidget:
     p.module = 'Annotations'
     p.label = 'Annotations'
     self.modules.append(p)    
+
+    p = ModuleButtonProperty()
+    p.module = 'Editor'
+    p.label = 'Editor'
+    self.modules.append(p)    
     
     self.currentModuleId = 0
     self.initialized = 0
