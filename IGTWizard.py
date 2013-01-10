@@ -42,7 +42,6 @@ class IGTWizard:
 class ModuleButtonProperty:
   module = ''
   label = ''
-  color = ''
   handler = None
   button = None
 
@@ -65,22 +64,19 @@ class IGTWizardWidget:
     p = ModuleButtonProperty();
     p.module = 'Data'
     p.label = 'Data'
-    p.color = 'Red'
     self.modules.append(p)
 
     p = ModuleButtonProperty()
     p.module = 'OpenIGTLinkIF'
     p.label = 'OpenIGTLink IF'
-    p.color = 'Blue'
     self.modules.append(p)
 
     p = ModuleButtonProperty()
     p.module = 'Annotations'
     p.label = 'Annotations'
-    p.color = 'Green'
     self.modules.append(p)    
     
-    self.currentModule = 'Data'
+    self.currentModuleId = 0
     self.initialized = 0
 
   def setup(self):
@@ -97,24 +93,50 @@ class IGTWizardWidget:
 
     self.dockPanel = qt.QDockWidget('IGT Wizard')
     self.dockPanel.setAllowedAreas(qt.Qt.LeftDockWidgetArea | qt.Qt.RightDockWidgetArea);
+
     self.dockFrame = qt.QFrame(self.dockPanel)
     self.dockFrame.setFrameStyle(qt.QFrame.NoFrame)
-    self.dockLayout = qt.QHBoxLayout()
+    self.dockLayout = qt.QVBoxLayout()
 
+    ## Button Frame
+    self.dockButtonFrame = qt.QFrame(self.dockFrame)
+    self.dockButtonFrame.setFrameStyle(qt.QFrame.NoFrame)
+    self.dockButtonLayout = qt.QHBoxLayout()
+
+    id = 0
     for btnProp in self.modules:
-      key = btnProp.module
-      print "%s -- %s" % (key, btnProp.label)
       btnProp.button = qt.QPushButton(btnProp.label)
       btnProp.button.setCheckable ( True )
-      # NOTE: we cannot use lambda for slot here, because it treats 'key' as a vaiilable
+      # NOTE: we cannot use lambda for slot here, because it treats 'id' as a vaiilable
       #       see http://math.andrej.com/2009/04/09/pythons-lambda-is-broken/
-      def f(key=key): return self.onModuleChange(key)
+      def f(id=id): return self.onModuleChange(id)
       btnProp.handler = f;
       btnProp.button.connect('clicked()', btnProp.handler)
-      self.dockLayout.addWidget(btnProp.button)
+      self.dockButtonLayout.addWidget(btnProp.button)
+      id = id + 1
       
+    self.dockButtonFrame.setLayout(self.dockButtonLayout)
+    self.dockLayout.addWidget(self.dockButtonFrame)
+
+    ## Wizard Frame
+    self.dockWizardFrame = qt.QFrame(self.dockFrame)
+    self.dockWizardFrame.setFrameStyle(qt.QFrame.NoFrame)
+    self.dockWizardLayout = qt.QHBoxLayout()
+    self.backButton = qt.QPushButton(" << ")
+    self.backButton.connect('clicked()', self.onBack)
+    self.nextButton = qt.QPushButton(" >> ")
+    self.nextButton.connect('clicked()', self.onNext)
+    self.dockWizardLayout.addWidget(self.backButton)
+    self.dockWizardLayout.addWidget(self.nextButton)
+    self.dockWizardFrame.setLayout(self.dockWizardLayout)
+    self.dockLayout.addWidget(self.dockWizardFrame)
+
+    ## Set frame to the dock panel
     self.dockFrame.setLayout(self.dockLayout)
     self.dockPanel.setWidget(self.dockFrame)
+
+    self.dockButtonFrame.show()
+    self.dockWizardFrame.show()
     mw = slicer.util.mainWindow()
     mw.addDockWidget(qt.Qt.LeftDockWidgetArea, self.dockPanel)
     self.dockFrame.show()
@@ -122,24 +144,29 @@ class IGTWizardWidget:
     # Add vertical spacer
     self.layout.addStretch(1)
 
-    #slicer.util.selectModule(self.currentModule)
-    self.onModuleChange(self.currentModule)
+    self.onModuleChange(self.currentModuleId)
     self.initialized = 1
-
 
   def enter(self):
     if self.initialized == 1:
-      slicer.util.selectModule(self.currentModule)
+      slicer.util.selectModule(self.currentModuleId)
     
-  def onModuleChange(self, moduleName):
-    print 'Change module to %s' % moduleName
-    slicer.util.selectModule(moduleName)
-    for btnProp in self.modules:
-      key = btnProp.module
-      if key != moduleName:
-        btnProp.button.setChecked(False)
-      else:
-        btnProp.button.setChecked(True)
+  def onModuleChange(self, moduleId):
+    print 'Change module to %s' % self.modules[moduleId].module
+    slicer.util.selectModule(self.modules[moduleId].module)
+    self.modules[self.currentModuleId].button.setChecked(False)
+    self.modules[moduleId].button.setChecked(True)
+    self.currentModuleId = moduleId
+
+  def onBack(self):
+    n = len(self.modules)
+    next = (self.currentModuleId -1 + n) % n
+    self.onModuleChange(next)
+
+  def onNext(self):
+    n = len(self.modules)
+    next = (self.currentModuleId + 1) % n
+    self.onModuleChange(next)
 
   def onReload(self,moduleName="IGTWizard"):
     """Generic reload method for any scripted module.
