@@ -61,14 +61,19 @@ class IGTWizardWidget:
 
     self.modules = []
 
+    p = ModuleButtonProperty()
+    p.module = 'OpenIGTLinkIF'
+    p.label = 'OpenIGTLink IF'
+    self.modules.append(p)
+
     p = ModuleButtonProperty();
     p.module = 'Data'
     p.label = 'Data'
     self.modules.append(p)
 
     p = ModuleButtonProperty()
-    p.module = 'OpenIGTLinkIF'
-    p.label = 'OpenIGTLink IF'
+    p.module = 'Models'
+    p.label = 'Models'
     self.modules.append(p)
 
     p = ModuleButtonProperty()
@@ -149,7 +154,7 @@ class IGTWizardWidget:
     # Add vertical spacer
     self.layout.addStretch(1)
 
-    self.onModuleChange(self.currentModuleId)
+    #self.onModuleChange(self.currentModuleId)
     self.initialized = 1
 
   def enter(self):
