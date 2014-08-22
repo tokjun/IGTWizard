@@ -1,6 +1,7 @@
 import os
 import unittest
 import copy
+import os.path
 from __main__ import vtk, qt, ctk, slicer
 
 #
@@ -12,7 +13,7 @@ class IGTWizard:
     parent.title = "IGTWizard" # TODO make this more human readable by adding spaces
     parent.categories = ["IGT"]
     parent.dependencies = []
-    parent.contributors = ["Junichi Tokuda (BWH)"]
+    parent.contributors = ["Junichi Tokuda (BWH), Atsushi Yamada (Shiga University of Medical Science in Japan)"]
     parent.helpText = """
     This is an example of scripted loadable module bundled in an extension.
     """
@@ -60,34 +61,11 @@ class IGTWizardWidget:
       self.parent.show()
 
     self.modules = []
-
-    p = ModuleButtonProperty()
-    p.module = 'OpenIGTLinkIF'
-    p.label = 'OpenIGTLink IF'
-    self.modules.append(p)
-
-    p = ModuleButtonProperty();
-    p.module = 'Data'
-    p.label = 'Data'
-    self.modules.append(p)
-
-    p = ModuleButtonProperty()
-    p.module = 'Models'
-    p.label = 'Models'
-    self.modules.append(p)
-
-    p = ModuleButtonProperty()
-    p.module = 'Annotations'
-    p.label = 'Annotations'
-    self.modules.append(p)    
-
-    p = ModuleButtonProperty()
-    p.module = 'Editor'
-    p.label = 'Editor'
-    self.modules.append(p)    
     
     self.currentModuleId = 0
     self.initialized = 0
+
+    self.numberOfModule = 0
 
   def setup(self):
     # Instantiate and connect widgets ...
@@ -112,32 +90,28 @@ class IGTWizardWidget:
     self.dockButtonFrame = qt.QFrame(self.dockFrame)
     self.dockButtonFrame.setFrameStyle(qt.QFrame.NoFrame)
     self.dockButtonLayout = qt.QHBoxLayout()
-
-    id = 0
-    for btnProp in self.modules:
-      btnProp.button = qt.QPushButton(btnProp.label)
-      btnProp.button.setCheckable ( True )
-      # NOTE: we cannot use lambda for slot here, because it treats 'id' as a vaiilable
-      #       see http://math.andrej.com/2009/04/09/pythons-lambda-is-broken/
-      def f(id=id): return self.onModuleChange(id)
-      btnProp.handler = f;
-      btnProp.button.connect('clicked()', btnProp.handler)
-      self.dockButtonLayout.addWidget(btnProp.button)
-      id = id + 1
       
     self.dockButtonFrame.setLayout(self.dockButtonLayout)
-    self.dockLayout.addWidget(self.dockButtonFrame)
 
     ## Wizard Frame
     self.dockWizardFrame = qt.QFrame(self.dockFrame)
     self.dockWizardFrame.setFrameStyle(qt.QFrame.NoFrame)
     self.dockWizardLayout = qt.QHBoxLayout()
+    self.fileReadButton = qt.QPushButton("Load File")
+    self.fileReadButton.connect('clicked()', self.onLoad)
+    self.clearButton = qt.QPushButton("Clear All Buttons")
+    self.clearButton.connect('clicked()', self.clearAllButtons)
+    self.clearButton.enabled = False
     self.backButton = qt.QPushButton(" << ")
+    self.backButton.enabled = False
     self.backButton.connect('clicked()', self.onBack)
     self.nextButton = qt.QPushButton(" >> ")
+    self.nextButton.enabled = False
     self.nextButton.connect('clicked()', self.onNext)
     self.dockWizardLayout.addWidget(self.backButton)
     self.dockWizardLayout.addWidget(self.nextButton)
+    self.dockWizardLayout.addWidget(self.fileReadButton)
+    self.dockWizardLayout.addWidget(self.clearButton)
     self.dockWizardFrame.setLayout(self.dockWizardLayout)
     self.dockLayout.addWidget(self.dockWizardFrame)
 
@@ -154,7 +128,6 @@ class IGTWizardWidget:
     # Add vertical spacer
     self.layout.addStretch(1)
 
-    #self.onModuleChange(self.currentModuleId)
     self.initialized = 1
 
   def enter(self):
@@ -167,6 +140,72 @@ class IGTWizardWidget:
     self.modules[self.currentModuleId].button.setChecked(False)
     self.modules[moduleId].button.setChecked(True)
     self.currentModuleId = moduleId
+
+  def clearAllButtons(self):
+    self.onModuleChange(self.numberOfModule)
+    self.numberOfModule = 0
+    self.onReload()
+
+  def onLoad(self):
+    fileName = qt.QFileDialog.getOpenFileName()
+
+    print(fileName)
+    f = open(fileName, "r")
+    l = f.readline()
+    while l:
+      print l,
+      l = f.readline()
+
+      splitText = l.split(',')
+      number = len(splitText)
+      
+      if(number >= 2):
+        print(number)
+        print(splitText[0])
+        print(splitText[1])
+
+        moduleName = splitText[0]
+        label = splitText[1]
+        p = ModuleButtonProperty()
+        p.module = moduleName
+        p.label = moduleName
+        self.modules.append(p)   
+
+        self.numberOfModule = self.numberOfModule + 1
+    
+    f.close
+
+    p = ModuleButtonProperty()
+    p.module = 'IGTWizard'
+    p.label = 'IGTWizard'
+    self.modules.append(p)   
+
+    id = 0
+    for btnProp in self.modules:
+      btnProp.button = qt.QPushButton(btnProp.label)
+      btnProp.button.setCheckable ( True )
+      # NOTE: we cannot use lambda for slot here, because it treats 'id' as a vaiilable
+      #       see http://math.andrej.com/2009/04/09/pythons-lambda-is-broken/
+      def f(id=id): return self.onModuleChange(id)
+      btnProp.handler = f;
+      btnProp.button.connect('clicked()', btnProp.handler)
+      self.dockButtonLayout.addWidget(btnProp.button)
+      if(id == 4):
+        self.dockLayout.addWidget(self.dockButtonFrame)
+        self.dockButtonLayout = qt.QHBoxLayout()
+        self.dockButtonFrame = qt.QFrame(self.dockFrame)
+        self.dockButtonFrame.setFrameStyle(qt.QFrame.NoFrame)
+        self.dockButtonFrame.setLayout(self.dockButtonLayout)
+      id = id + 1
+
+    self.dockLayout.addWidget(self.dockButtonFrame)
+    
+    self.dockLayout.removeWidget(self.dockWizardFrame)
+    self.dockLayout.addWidget(self.dockWizardFrame)
+
+    self.backButton.enabled = True
+    self.nextButton.enabled = True
+    self.clearButton.enabled = True
 
   def onBack(self):
     n = len(self.modules)
@@ -183,6 +222,9 @@ class IGTWizardWidget:
     ModuleWizard will subsitute correct default moduleName.
     """
     import imp, sys, os, slicer
+
+    #Delete IGT Wizard Pane
+    self.dockPanel.close()
 
     widgetName = moduleName + "Widget"
     # reload the source code
