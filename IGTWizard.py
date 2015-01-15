@@ -515,7 +515,6 @@ class IGTWizardWidget:
     self.loadFileFlag = 1
 
     fileName = qt.QFileDialog.getOpenFileName()
-    #print(fileName)
     if(fileName != ""):
       self.clearItemList()
       f = open(fileName, "rb")
@@ -525,7 +524,6 @@ class IGTWizardWidget:
       self.clearAllButtons() # clear self.module
 
       while l:
-        #print l,
         l = f.readline()
 
         if(l.find('#') == -1): # If the line is not a comment one...
@@ -534,9 +532,6 @@ class IGTWizardWidget:
           number = len(splitText)
 
           if((l.find("<item>") >= 0 or l.find("<Item>") >= 0) and number >= 2): # If the line has ',', the code recognizes an item. 
-            #print(number)
-            #print(splitText[0])
-            #print(splitText[1])
 
             splitText[0] = splitText[0].replace('<item>', '').replace('<Item>', '').rstrip().lstrip()
             splitText[1] = splitText[1].replace('</item>', '').replace('</Item>', '').rstrip().lstrip()
@@ -556,8 +551,6 @@ class IGTWizardWidget:
               l = "IGT Wizard"
             self.dockPanel.windowTitle = l
             self.wizardTitleTextBox.text = l
-            #print("title line is...")
-            #print l
     
       f.close()
 
