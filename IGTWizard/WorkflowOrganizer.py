@@ -5,16 +5,16 @@ import platform
 from __main__ import vtk, qt, ctk, slicer
 
 #
-# IGTWizard
+# WorkflowOrganizer
 #
-class IGTWizard:
+class WorkflowOrganizer:
   def __init__(self, parent):
-    parent.title = "IGTWizard" # TODO make this more human readable by adding spaces
+    parent.title = "WorkflowOrganizer" # TODO make this more human readable by adding spaces
     parent.categories = ["IGT"]
     parent.dependencies = []
     parent.contributors = ["Junichi Tokuda (Brigham and Women's Hospital) and Atsushi Yamada (Shiga University of Medical Science)"]
     parent.helpText = """
-    This module only binds the existing modules that are required for given clinical applications, and allows the users to go through those modules by simply clicking the navigation buttons. The details are in <a href=http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Extensions/IGTWizard>the online documentation</a>.
+    This module only binds the existing modules that are required for given clinical applications, and allows the users to go through those modules by simply clicking the navigation buttons. The details are in <a href=http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Extensions/WorkflowOrganizer>the online documentation</a>.
     """
     parent.acknowledgementText = """
     This work was partially funded by NIH (R01 CA111288, P41 EB015898, U54 EB005149, R01 CA138586), CIMIT and Biomedical Innovation Center at Shiga University of Medical Science in Japan.
@@ -28,14 +28,14 @@ class IGTWizard:
       slicer.selfTests
     except AttributeError:
       slicer.selfTests = {}
-    slicer.selfTests['IGTWizard'] = self.runTest
+    slicer.selfTests['WorkflowOrganizer'] = self.runTest
 
   def runTest(self):
-    tester = IGTWizardTest()
+    tester = WorkflowOrganizerTest()
     tester.runTest()
 
 #
-# qIGTWizardWidget
+# qWorkflowOrganizerWidget
 #
 class ModuleListProperty:
   module = ''
@@ -48,7 +48,7 @@ class ModuleButtonProperty:
   handler = None
   button = None
 
-class IGTWizardWidget:
+class WorkflowOrganizerWidget:
 
   def __init__(self, parent = None):
     if not parent:
@@ -81,7 +81,7 @@ class IGTWizardWidget:
     #  your module to users)
     self.reloadButton = qt.QPushButton("Reload")
     self.reloadButton.toolTip = "Reload this module."
-    self.reloadButton.name = "IGTWizard Reload"
+    self.reloadButton.name = "WorkflowOrganizer Reload"
     #reloadFormLayout.addWidget(self.reloadButton)
     ##self.reloadButton.connect('clicked()', self.onReload)
 
@@ -165,7 +165,7 @@ class IGTWizardWidget:
 
     self.wizardTitleTextBox = qt.QLineEdit()
     self.wizardTitleTextBox.enabled = True
-    self.wizardTitleTextBox.text = "IGT Wizard"
+    self.wizardTitleTextBox.text = "Workflow Organizer"
     self.wizardTitleFormLayout.addRow("Wizard Title:", self.wizardTitleTextBox)
     self.wizardTitleTextBox.connect('textEdited(QString)', self.editedWizardTitle)
 
@@ -317,7 +317,7 @@ class IGTWizardWidget:
   def createDockPanel(self):
     self.modules = []
 
-    self.dockPanel = qt.QDockWidget('IGT Wizard')
+    self.dockPanel = qt.QDockWidget('Workflow Organizer')
     self.dockPanel.windowTitle = self.wizardTitleTextBox.text
     self.dockPanel.setAllowedAreas(qt.Qt.LeftDockWidgetArea | qt.Qt.RightDockWidgetArea);
 
@@ -343,13 +343,13 @@ class IGTWizardWidget:
     self.nextButton = qt.QPushButton(" >> ")
     self.nextButton.enabled = False
     self.nextButton.connect('clicked()', self.onNext)
-    self.IGTWizardButton = qt.QPushButton("IGTWizard")
-    self.IGTWizardButton.enabled = False
-    self.IGTWizardButton.connect('clicked()', self.onIGTWizard)    
+    self.WorkflowOrganizerButton = qt.QPushButton("WorkflowOrganizer")
+    self.WorkflowOrganizerButton.enabled = False
+    self.WorkflowOrganizerButton.connect('clicked()', self.onWorkflowOrganizer)    
 
     self.dockWizardLayout.addWidget(self.backButton)
     self.dockWizardLayout.addWidget(self.nextButton)
-    self.dockWizardLayout.addWidget(self.IGTWizardButton)
+    self.dockWizardLayout.addWidget(self.WorkflowOrganizerButton)
     self.dockWizardFrame.setLayout(self.dockWizardLayout)
     self.dockLayout.addWidget(self.dockWizardFrame)
 
@@ -378,16 +378,16 @@ class IGTWizardWidget:
     self.modules[self.currentModuleId].button.setChecked(False)
     self.modules[moduleId].button.setChecked(True)
     self.currentModuleId = moduleId
-    self.IGTWizardButton.enabled = True    
+    self.WorkflowOrganizerButton.enabled = True    
 
   def clearAllButtons(self):
     self.numberOfModule = 0
     self.clearButton.enabled = False
 
-    #Delete IGT Wizard Panel
+    #Delete Workflow Organizer Panel
     self.dockPanel.close()
 
-    #Cretate IGT Wizard Panel
+    #Cretate Workflow Organizer Panel
     self.createDockPanel()
 
   def onPlusButton(self):
@@ -548,7 +548,7 @@ class IGTWizardWidget:
           elif(l.find("<title>") >= 0 or l.find("<Title>") >= 0):
             l = l.replace('<title>', '').replace('<Title>', '').replace('</title>', '').replace('</Title>', '').rstrip().lstrip()
             if not l:
-              l = "IGT Wizard"
+              l = "Workflow Organizer"
             self.dockPanel.windowTitle = l
             self.wizardTitleTextBox.text = l
     
@@ -562,26 +562,26 @@ class IGTWizardWidget:
     n = len(self.modules)
     next = (self.currentModuleId -1 + n) % n
     self.onModuleChange(next)
-    self.IGTWizardButton.enabled = True
+    self.WorkflowOrganizerButton.enabled = True
 
   def onNext(self):
     n = len(self.modules)
     next = (self.currentModuleId + 1) % n
     self.onModuleChange(next)
-    self.IGTWizardButton.enabled = True
+    self.WorkflowOrganizerButton.enabled = True
 
-  def onIGTWizard(self):
-    slicer.util.selectModule("IGTWizard")
+  def onWorkflowOrganizer(self):
+    slicer.util.selectModule("WorkflowOrganizer")
     self.modules[self.currentModuleId].button.setChecked(False)
-    self.IGTWizardButton.enabled = False
+    self.WorkflowOrganizerButton.enabled = False
 
-  def onReload(self,moduleName="IGTWizard"):
+  def onReload(self,moduleName="WorkflowOrganizer"):
     """Generic reload method for any scripted module.
     ModuleWizard will subsitute correct default moduleName.
     """
     import imp, sys, os, slicer
 
-    #Delete IGT Wizard Pane
+    #Delete Workflow Organizer Pane
     self.dockPanel.close()
 
     widgetName = moduleName + "Widget"
@@ -622,7 +622,7 @@ class IGTWizardWidget:
     globals()[widgetName.lower()].setup()
     setattr(globals()['slicer'].modules, widgetName, globals()[widgetName.lower()])
 
-  def onReloadAndTest(self,moduleName="IGTWizard"):
+  def onReloadAndTest(self,moduleName="WorkflowOrganizer"):
     try:
       self.onReload()
       evalString = 'globals()["%s"].%sTest()' % (moduleName, moduleName)
@@ -635,13 +635,13 @@ class IGTWizardWidget:
           "Reload and Test", 'Exception!\n\n' + str(e) + "\n\nSee Python Console for Stack Trace")
 
 #
-# IGTWizardLogic
+# WorkflowOrganizerLogic
 #
-class IGTWizardLogic:
+class WorkflowOrganizerLogic:
   def __init__(self):
     pass
 
-class IGTWizardTest(unittest.TestCase):
+class WorkflowOrganizerTest(unittest.TestCase):
   def delayDisplay(self,message,msec=1000):
     """This utility method displays a small dialog and waits.
     This does two things: 1) it lets the event loop catch up
@@ -668,7 +668,7 @@ class IGTWizardTest(unittest.TestCase):
     """Run as few or as many tests as needed here.
     """
     self.setUp()
-    self.test_IGTWizard1()
+    self.test_WorkflowOrganizer1()
 
-  def test_IGTWizard1(self):
+  def test_WorkflowOrganizer1(self):
     self.delayDisplay('Test passed!')
